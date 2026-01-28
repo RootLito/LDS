@@ -18,7 +18,10 @@ class TrainingAttended extends Model
         'duration',
         'type',
         'sponsored',
+        'certificate_path',
     ];
+
+
 
     public function employee()
     {

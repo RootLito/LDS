@@ -16,7 +16,7 @@
                 alt="Profile Picture" class="w-full h-full object-cover" />
         </div>
 
-        <form action="{{ route('employee.profile.update') }}" method="POST" enctype="multipart/form-data"
+        <form action="{{ route('employee.profile.updateProfile') }}" method="POST" enctype="multipart/form-data"
             class="w-full">
             @csrf
 
@@ -30,7 +30,6 @@
         </form>
     </div>
 
-    {{-- RIGHT COLUMN --}}
     <div class="flex-1">
         <h2 class="text-gray-700 font-semibold mb-6 text-lg">Account Information</h2>
 
@@ -110,14 +109,13 @@
                 Save Changes
             </button>
 
-            @if(session('success'))
+            {{-- @if(session('success'))
             <div class="absolute top-0 right-0 bg-green-600 text-white px-5 py-3 rounded shadow-lg font-semibold z-50">
                 {{ session('success') }}
             </div>
-            @endif
+            @endif --}}
 
         </form>
     </div>
 </div>
-
 @endsection

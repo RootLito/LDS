@@ -31,4 +31,5 @@ class Employee extends Authenticatable
     {
         return $this->hasMany(TrainingAttended::class, 'emp_id');
     }
+    
 }

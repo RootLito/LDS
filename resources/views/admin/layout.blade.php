@@ -33,6 +33,13 @@
                     <span class="font-semibold text-gray-700">Training</span>
                 </a>
 
+                <a href="{{ route('admin.certificates') }}"
+                    class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('admin.certificates') ? 'bg-gray-200' : '' }}">
+                    <i class="fa-solid fa-image"></i>
+
+                    <span class="font-semibold text-gray-700">Cerificates</span>
+                </a>
+
                 <a href="{{ route('admin.employee') }}"
                     class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('admin.employee*') ? 'bg-gray-200' : '' }}">
                     <i class="fa-solid fa-user-group"></i>
@@ -61,6 +68,7 @@
             </div>
         </div>
     </div>
-<script src="//unpkg.com/alpinejs" defer></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
 </body>
+
 </html>

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('duration'); 
             $table->string('type');
             $table->string('sponsored')->nullable();
-
+            $table->string('certificate_path')->nullable();
             $table->timestamps();
         });
     }

@@ -8,7 +8,8 @@
     <title>Employee | Learning & Development System</title>
     @vite(['resources/css/app.css'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-    @livewireStyles
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
 
 </head>
 
@@ -36,6 +37,13 @@
                         Profile
                     </a>
 
+                    <!-- Certificates -->
+                    <a href="{{ route('employee.certificates') }}"
+                        class="w-full text-sm font-semibold text-gray-700 flex items-center gap-4 px-6 py-2 rounded hover:bg-gray-100 transition {{ request()->routeIs('employee.certificates') ? 'bg-gray-200' : '' }}">
+                        <i class="fa-solid fa-image"></i>
+                        Certificates
+                    </a>
+
 
                     <!-- Logout -->
                     <form id="employee-logout-form" action="{{ route('employee.logout') }}" method="POST" class="flex">
@@ -55,5 +63,28 @@
             @yield('content')
         </main>
     </div>
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "3000"
+            };
+
+            @if(session('success'))
+                toastr.success(@json(session('success')));
+            @endif
+
+            @if(session('error'))
+                toastr.error(@json(session('error')));
+            @endif
+        });
+    </script>
+
 </body>
+
 </html>

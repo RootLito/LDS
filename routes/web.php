@@ -71,8 +71,16 @@ Route::middleware(['auth:employee'])->group(function () {
     Route::get('/employee/profile', [EmployeeController::class, 'profile'])
         ->name('employee.profile');
 
-    Route::post('/employee/profile', [EmployeeController::class, 'updateProfile'])
+    Route::post('/employee/profile-picture', [EmployeeController::class, 'updateProfilePicture'])
+        ->name('employee.profile.updateProfile');
+
+    Route::post('/employee/profile', [EmployeeController::class, 'updateAccount'])
         ->name('employee.profile.update');
+
+
+
+    Route::get('/employee/certificates', [TrainingController::class, 'certificates'])
+        ->name('employee.certificates');
 });
 
 
@@ -121,4 +129,8 @@ Route::middleware(['auth:admin'])->group(function () {
         ->name('admin.employee.profile');
 
     Route::get('/export-trainings', [TrainingController::class, 'exportTrainings'])->name('export.trainings');
+
+
+    Route::get('/admin/certificates', [TrainingController::class, 'allCertificates'])
+        ->name('admin.certificates');
 });

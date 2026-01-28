@@ -9,6 +9,7 @@ use App\Models\TrainingAttended;
 use Illuminate\Support\Facades\Auth;
 use App\Exports\ExportData;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 
@@ -164,11 +165,12 @@ class TrainingController extends Controller
         }
 
         $request->validate([
-            'title'      => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date'   => 'required|date|after_or_equal:start_date',
-            'type'       => 'required|string|max:100',
-            'sponsored'  => 'nullable|string|max:255',
+            'title'           => 'required|string|max:255',
+            'start_date'      => 'required|date',
+            'end_date'        => 'required|date|after_or_equal:start_date',
+            'type'            => 'required|string|max:100',
+            'sponsored'       => 'nullable|string|max:255',
+            'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $employee = Auth::guard('employee')->user();
@@ -182,14 +184,22 @@ class TrainingController extends Controller
         // Format dates as dd/mm/yyyy
         $formattedDate = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
 
+        $certificatePath = null;
+        if ($request->hasFile('certificate_path')) {
+            $certificatePath = $request->file('certificate_path')->store('certificates', 'public');
+        }
+
         TrainingAttended::create([
-            'emp_id'    => $employee->id,
-            'title'     => strtoupper($request->title),
-            'date'      => $formattedDate,
-            'duration'  => $hours,
-            'type'      => strtoupper($request->type), 
-            'sponsored' => strtoupper($request->sponsored),
+            'emp_id'          => $employee->id,
+            'title'           => strtoupper($request->title),
+            'date'            => $formattedDate,
+            'duration'        => $hours,
+            'type'            => strtoupper($request->type),
+            'sponsored'       => strtoupper($request->sponsored),
+            'certificate_path' => $certificatePath,
         ]);
+
+
 
         return back()->with('success', 'Training record added successfully!');
     }
@@ -203,11 +213,12 @@ class TrainingController extends Controller
         $training = TrainingAttended::where('emp_id', $employee->id)->findOrFail($id);
 
         $request->validate([
-            'title'      => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date'   => 'required|date|after_or_equal:start_date',
-            'type'       => 'required|string|max:100',
-            'sponsored'  => 'nullable|string|max:255',
+            'title'           => 'required|string|max:255',
+            'start_date'      => 'required|date',
+            'end_date'        => 'required|date|after_or_equal:start_date',
+            'type'            => 'required|string|max:100',
+            'sponsored'       => 'nullable|string|max:255',
+            'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         // Calculate duration in hours: 1 day = 8 hours
@@ -219,12 +230,23 @@ class TrainingController extends Controller
         // Format dates as dd/mm/yyyy
         $formattedDate = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
 
+        $certificatePath = $training->certificate_path;
+
+        if ($request->hasFile('certificate_path')) {
+            // Delete old certificate if it exists
+            if ($certificatePath) {
+                Storage::disk('public')->delete($certificatePath);
+            }
+            $certificatePath = $request->file('certificate_path')->store('certificates', 'public');
+        }
+
         $training->update([
-            'title'     => strtoupper($request->title),   // ALL CAPS
-            'date'      => $formattedDate,
-            'duration'  => $hours,
-            'type'      => strtoupper($request->type),    // ALL CAPS
-            'sponsored' => strtoupper($request->sponsored),
+            'title'           => strtoupper($request->title),
+            'date'            => $formattedDate,
+            'duration'        => $hours,
+            'type'            => strtoupper($request->type),
+            'sponsored'       => strtoupper($request->sponsored),
+            'certificate_path' => $certificatePath,
         ]);
 
         return back()->with('success', 'Training record updated successfully!');
@@ -240,6 +262,30 @@ class TrainingController extends Controller
 
         return back()->with('success', 'Training record deleted successfully!');
     }
+    // ===============================
+    // Employee: View Certificates
+    // ===============================
+    public function certificates()
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $trainings = TrainingAttended::where('emp_id', $employee->id)
+            ->whereNotNull('certificate_path')
+            ->get();
+
+        return view('employee.certificates', compact('trainings'));
+    }
+
+    public function allCertificates()
+    {
+        $employees = Employee::with(['trainingsAttended' => function ($q) {
+            $q->whereNotNull('certificate_path');
+        }])
+        ->paginate(10);
+
+        return view('admin.certificates', compact('employees'));
+    }
+
 
 
     // ===============================

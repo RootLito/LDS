@@ -9,24 +9,34 @@ use App\Models\Employee;
 
 class EmployeeController extends Controller
 {
-    // ===============================
     // Show Employee Profile Page
-    // ===============================
     public function profile()
     {
-        if (!Auth::guard('employee')->check()) {
-            return redirect()->route('employee.login.form')
-                ->with('error', 'Please login first.');
-        }
         $employee = Auth::guard('employee')->user();
-
         return view('employee.profile', compact('employee'));
     }
 
-    // ===============================
-    // Update Employee Profile
-    // ===============================
-    public function updateProfile(Request $request)
+    // Update only profile picture
+    public function updateProfilePicture(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $validated = $request->validate([
+            'profile' => 'required|image|max:2048',
+        ]);
+
+        if ($employee->profile) {
+            Storage::disk('public')->delete($employee->profile);
+        }
+
+        $employee->profile = $request->file('profile')->store('profiles', 'public');
+        $employee->save();
+
+        return back()->with('success', 'Profile picture updated successfully!');
+    }
+
+    // Update account info (excluding profile picture)
+    public function updateAccount(Request $request)
     {
         $employee = Auth::guard('employee')->user();
 
@@ -36,21 +46,13 @@ class EmployeeController extends Controller
             'birthdate' => 'required|date',
             'appointment_date' => 'required|date',
             'status' => 'required|in:permanent,jo,cos',
-            'profile' => 'nullable|image|max:2048',
             'position' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
         ]);
 
-        if ($request->hasFile('profile')) {
-            if ($employee->profile) {
-                Storage::disk('public')->delete($employee->profile);
-            }
-            $validated['profile'] = $request->file('profile')
-                ->store('profiles', 'public');
-        }
         $employee->update($validated);
 
-        return back()->with('success', 'Profile updated successfully!');
+        return back()->with('success', 'Account information updated successfully!');
     }
 }

@@ -23,7 +23,7 @@
             <div @click.away="open = false" class="bg-white rounded shadow-lg w-full max-w-md p-6 relative">
                 <h2 class="text-xl font-bold text-gray-700 mb-4">Add New Training</h2>
 
-                <form action="{{ route('training.attended.store') }}" method="POST">
+                <form action="{{ route('training.attended.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">Title</label>
@@ -67,6 +67,17 @@
                         <input type="text" name="sponsored"
                             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
                     </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Certificate
+                        </label>
+                        <input type="file" name="certificate_path" accept="image/jpeg,image/png,image/jpg"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <p class="text-gray-500 text-sm mt-1">Upload one image (JPG or PNG, max 2MB).</p>
+                    </div>
+
+
 
                     <div class="flex justify-end gap-2 mt-4">
                         <button type="button" @click="open = false"
@@ -156,7 +167,7 @@
                                             <h2 class="text-xl font-bold text-gray-700 mb-4">Edit Training</h2>
 
                                             <form action="{{ route('training.attended.update', $training->id) }}"
-                                                method="POST">
+                                                method="POST" enctype="multipart/form-data">
                                                 @csrf
                                                 @method('PUT')
 
@@ -228,6 +239,17 @@
                                                         value="{{ $training->sponsored }}"
                                                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
                                                 </div>
+                                                <div class="mb-4">
+                                                    <label class="block text-sm font-medium text-gray-700">
+                                                        Certificate
+                                                    </label>
+                                                    <input type="file" name="certificate_path"
+                                                        accept="image/jpeg,image/png,image/jpg"
+                                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <p class="text-gray-500 text-sm mt-1">Upload one image (JPG or PNG,
+                                                        max 2MB).</p>
+                                                </div>
+
 
                                                 <div class="flex justify-end gap-2 mt-4">
                                                     <button type="button" @click="openEdit = false"
@@ -306,5 +328,4 @@
         </div>
     </div>
 </div>
-<script src="//unpkg.com/alpinejs" defer></script>
 @endsection
