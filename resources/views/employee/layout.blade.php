@@ -15,7 +15,7 @@
 
 <body>
     <div class="w-full h-screen flex flex-col bg-gray-200">
-        <div class="w-full bg-white">
+        <div class="w-full bg-white border-b border-gray-200">
             <header class="flex max-w-[1100px] h-[60px] items-center justify-between mx-auto">
                 <div class="flex">
                     <img src="{{ asset('images/bfar.png') }}" alt="bfar logo" width="50px" class="self-center">
@@ -38,11 +38,11 @@
                     </a>
 
                     <!-- Certificates -->
-                    <a href="{{ route('employee.certificates') }}"
+                    {{-- <a href="{{ route('employee.certificates') }}"
                         class="w-full text-sm font-semibold text-gray-700 flex items-center gap-4 px-6 py-2 rounded hover:bg-gray-100 transition {{ request()->routeIs('employee.certificates') ? 'bg-gray-200' : '' }}">
                         <i class="fa-solid fa-image"></i>
                         Certificates
-                    </a>
+                    </a> --}}
 
 
                     <!-- Logout -->
@@ -64,27 +64,5 @@
         </main>
     </div>
     <script src="//unpkg.com/alpinejs" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            toastr.options = {
-                "closeButton": true,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "timeOut": "3000"
-            };
-
-            @if(session('success'))
-                toastr.success(@json(session('success')));
-            @endif
-
-            @if(session('error'))
-                toastr.error(@json(session('error')));
-            @endif
-        });
-    </script>
-
 </body>
-
 </html>

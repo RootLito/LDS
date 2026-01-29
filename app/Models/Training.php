@@ -20,11 +20,16 @@ class Training extends Model
         'endorsed_by',
         'hrdc_resolution_no',
         'applicable_for',
+        'applicable_skills'
+    ];
+
+    protected $casts = [
+        'applicable_skills' => 'array',
     ];
 
     public function attendees()
     {
         return $this->belongsToMany(Employee::class, 'training_attended', 'training_id', 'emp_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 }

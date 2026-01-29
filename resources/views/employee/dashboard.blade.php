@@ -68,14 +68,14 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
                     </div>
 
-                    <div class="mb-4">
+                    {{-- <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700">
                             Certificate
                         </label>
                         <input type="file" name="certificate_path" accept="image/jpeg,image/png,image/jpg"
                             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                         <p class="text-gray-500 text-sm mt-1">Upload one image (JPG or PNG, max 2MB).</p>
-                    </div>
+                    </div> --}}
 
 
 
@@ -239,7 +239,7 @@
                                                         value="{{ $training->sponsored }}"
                                                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:outline-none">
                                                 </div>
-                                                <div class="mb-4">
+                                                {{-- <div class="mb-4">
                                                     <label class="block text-sm font-medium text-gray-700">
                                                         Certificate
                                                     </label>
@@ -248,7 +248,7 @@
                                                         class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
                                                     <p class="text-gray-500 text-sm mt-1">Upload one image (JPG or PNG,
                                                         max 2MB).</p>
-                                                </div>
+                                                </div> --}}
 
 
                                                 <div class="flex justify-end gap-2 mt-4">

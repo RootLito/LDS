@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
 @section('content')
-<div class="w-full h-full flex flex-col p-10">
+<div class="w-full h-full flex flex-col p-10 overflow-y-auto">
     <h1 class="text-2xl font-bold text-gray-700">Dashboard</h1>
     <p class="text-gray-500">Overview of training and employee statistics</p>
 

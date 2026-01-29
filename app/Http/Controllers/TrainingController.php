@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Skill;
 use Illuminate\Http\Request;
 use App\Models\Training;
 use App\Models\Employee;
@@ -76,42 +77,57 @@ class TrainingController extends Controller
 
     public function trainings(Request $request)
     {
+        $skills = Skill::all();
         $trainings = Training::query()
+            // Filter trainings by title, applicable_for, and status
             ->when(
                 $request->title,
-                fn($q) =>
-                $q->where('title', 'like', '%' . $request->title . '%')
+                fn($q) => $q->where('title', 'like', '%' . $request->title . '%')
             )
             ->when(
                 $request->applicable_for,
-                fn($q) =>
-                $q->where('applicable_for', $request->applicable_for)
+                fn($q) => $q->where('applicable_for', $request->applicable_for)
             )
             ->when(
                 $request->status,
-                fn($q) =>
-                $q->where('status', $request->status)
+                fn($q) => $q->whereHas('nominees', function ($q) use ($request) {
+                    // Only include employees whose status matches the selected one
+                    $q->where('status', $request->status);
+                })
             )
             ->latest()
-            ->paginate(10);
+            ->paginate(4);
 
+        // Loop over each training to determine the nominees
         foreach ($trainings as $training) {
             $nominees = Employee::whereDoesntHave('trainingsAttended', function ($q) use ($training) {
                 $q->where('title', $training->title);
-            })->get();
+            })
+                // Filter employees based on the training's applicable_for value
+                ->when($training->applicable_for, function ($q) use ($training) {
+                    if ($training->applicable_for === 'permanent') {
+                        $q->where('status', 'permanent');
+                    } elseif ($training->applicable_for === 'jocos') {
+                        $q->where('status', ['jo', 'cos']);
+                    } elseif ($training->applicable_for === 'per_and_jocos') {
+                        $q->whereIn('status', ['permanent', 'jo', 'cos']);
+                    }
+                })
+                ->get();
 
+            // Add the nominees and their count to the training object
             $training->nominees = $nominees;
             $training->number_of_nominees = $nominees->count();
         }
 
-
-        return view('admin.training', compact('trainings'));
+        return view('admin.training', compact('trainings', 'skills'));
     }
+
 
 
     public function employees(Request $request)
     {
-        $employees = Employee::with('trainingsAttended')
+        $employees = Employee::with('trainingsAttended')  // Ensure training data is eagerly loaded
             ->when(
                 $request->name,
                 fn($q) =>
@@ -139,10 +155,11 @@ class TrainingController extends Controller
                         ->having('total_hours', '>=', $request->hours);
                 });
             })
-            ->paginate(10);
+            ->paginate(8);
 
         return view('admin.employee', compact('employees'));
     }
+
 
     public function show($id)
     {
@@ -165,11 +182,11 @@ class TrainingController extends Controller
         }
 
         $request->validate([
-            'title'           => 'required|string|max:255',
-            'start_date'      => 'required|date',
-            'end_date'        => 'required|date|after_or_equal:start_date',
-            'type'            => 'required|string|max:100',
-            'sponsored'       => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'type' => 'required|string|max:100',
+            'sponsored' => 'nullable|string|max:255',
             'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -177,8 +194,8 @@ class TrainingController extends Controller
 
         // Calculate duration in hours: 1 day = 8 hours
         $start = Carbon::parse($request->start_date);
-        $end   = Carbon::parse($request->end_date);
-        $days  = $start->diffInDays($end) + 1; // +1 to include the start day
+        $end = Carbon::parse($request->end_date);
+        $days = $start->diffInDays($end) + 1; // +1 to include the start day
         $hours = $days * 8;
 
         // Format dates as dd/mm/yyyy
@@ -190,12 +207,12 @@ class TrainingController extends Controller
         }
 
         TrainingAttended::create([
-            'emp_id'          => $employee->id,
-            'title'           => strtoupper($request->title),
-            'date'            => $formattedDate,
-            'duration'        => $hours,
-            'type'            => strtoupper($request->type),
-            'sponsored'       => strtoupper($request->sponsored),
+            'emp_id' => $employee->id,
+            'title' => strtoupper($request->title),
+            'date' => $formattedDate,
+            'duration' => $hours,
+            'type' => strtoupper($request->type),
+            'sponsored' => strtoupper($request->sponsored),
             'certificate_path' => $certificatePath,
         ]);
 
@@ -213,18 +230,18 @@ class TrainingController extends Controller
         $training = TrainingAttended::where('emp_id', $employee->id)->findOrFail($id);
 
         $request->validate([
-            'title'           => 'required|string|max:255',
-            'start_date'      => 'required|date',
-            'end_date'        => 'required|date|after_or_equal:start_date',
-            'type'            => 'required|string|max:100',
-            'sponsored'       => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'type' => 'required|string|max:100',
+            'sponsored' => 'nullable|string|max:255',
             'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         // Calculate duration in hours: 1 day = 8 hours
         $start = Carbon::parse($request->start_date);
-        $end   = Carbon::parse($request->end_date);
-        $days  = $start->diffInDays($end) + 1;
+        $end = Carbon::parse($request->end_date);
+        $days = $start->diffInDays($end) + 1;
         $hours = $days * 8;
 
         // Format dates as dd/mm/yyyy
@@ -241,11 +258,11 @@ class TrainingController extends Controller
         }
 
         $training->update([
-            'title'           => strtoupper($request->title),
-            'date'            => $formattedDate,
-            'duration'        => $hours,
-            'type'            => strtoupper($request->type),
-            'sponsored'       => strtoupper($request->sponsored),
+            'title' => strtoupper($request->title),
+            'date' => $formattedDate,
+            'duration' => $hours,
+            'type' => strtoupper($request->type),
+            'sponsored' => strtoupper($request->sponsored),
             'certificate_path' => $certificatePath,
         ]);
 
@@ -278,10 +295,12 @@ class TrainingController extends Controller
 
     public function allCertificates()
     {
-        $employees = Employee::with(['trainingsAttended' => function ($q) {
-            $q->whereNotNull('certificate_path');
-        }])
-        ->paginate(10);
+        $employees = Employee::with([
+            'trainingsAttended' => function ($q) {
+                $q->whereNotNull('certificate_path');
+            }
+        ])
+            ->paginate(10);
 
         return view('admin.certificates', compact('employees'));
     }
@@ -293,7 +312,7 @@ class TrainingController extends Controller
     // ===============================
     public function index()
     {
-        $trainings = Training::all();
+        $trainings = Training::all()->pagination(8);
         return view('admin.trainings.index', compact('trainings'));
     }
 
@@ -305,25 +324,29 @@ class TrainingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title'               => 'required|string|max:255',
-            'status'              => 'required|string|max:50',
-            'duration'            => 'required|string|max:50',
-            'conducted_by'        => 'required|string|max:255',
-            'charging_of_funds'   => 'nullable|string|max:255',
-            'endorsed_by'         => 'nullable|string|max:255',
-            'hrdc_resolution_no'  => 'nullable|string|max:255',
-            'applicable_for'      => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
+            'status' => 'required|string|max:50',
+            'duration' => 'required|string|max:50',
+            'conducted_by' => 'required|string|max:255',
+            'charging_of_funds' => 'nullable|string|max:255',
+            'endorsed_by' => 'nullable|string|max:255',
+            'hrdc_resolution_no' => 'nullable|string|max:255',
+            'applicable_for' => 'nullable|string|max:255',
+            'applicable_skills' => 'nullable|array',
         ]);
 
+        // dd($request->all());
+
         Training::create([
-            'title'              => $request->title,
-            'status'             => $request->status,
-            'duration'           => $request->duration,
-            'conducted_by'       => $request->conducted_by,
-            'charging_of_funds'  => $request->charging_of_funds,
-            'endorsed_by'        => $request->endorsed_by,
+            'title' => $request->title,
+            'status' => $request->status,
+            'duration' => $request->duration,
+            'conducted_by' => $request->conducted_by,
+            'charging_of_funds' => $request->charging_of_funds,
+            'endorsed_by' => $request->endorsed_by,
             'hrdc_resolution_no' => $request->hrdc_resolution_no,
-            'applicable_for'     => $request->applicable_for,
+            'applicable_for' => $request->applicable_for,
+            'applicable_skills' => $request->applicable_skills,
         ]);
 
         return redirect()
