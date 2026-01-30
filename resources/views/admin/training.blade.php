@@ -181,17 +181,26 @@
                         <option value="cancelled" @selected(request('status') == 'cancelled')>Cancelled</option>
                     </select>
 
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer text-sm">
                         <i class="fa-solid fa-sliders me-2"></i> Apply Filters
                     </button>
+                    @if (request()->anyFilled(['title', 'applicable_for', 'status']))
+                        <a href="{{ route('admin.trainings') }}"
+                            class="bg-gray-100 border border-gray-300 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded text-sm flex items-center transition">
+                            <i class="fa-solid fa-xmark me-2"></i> Clear
+                        </a>
+                    @endif
+
+
                 </form>
 
                 <div class="bg-white rounded overflow-hidden">
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-100 text-gray-600">
                             <tr class="text-gray-600 text-left border-b border-gray-200">
-                                <th class="p-4" width="50%">Title</th>
+                                <th class="p-4" width="30%">Title</th>
                                 <th class="p-4">Applicable For</th>
+                                <th class="p-4">Applicable Skill</th>
                                 <th class="p-4">Duration</th>
                                 <th class="p-4">Number of Nominees</th>
                                 <th class="p-4">Action</th>
@@ -238,9 +247,24 @@
                                             {{ $badgeLabel }}
                                         </span>
                                     </td>
-                                    <td class="p-4">{{ $training->duration }}</td>
                                     <td class="p-4">
-                                        {{ $training->number_of_nominees > 0 ? $training->number_of_nominees : '' }}
+                                        @if ($training->applicable_skills && count($training->applicable_skills) > 0)
+                                            @foreach ($training->applicable_skills as $skill)
+                                                <span
+                                                    class="inline-block px-2 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-700  mr-2 mb-2">
+                                                    {{ $skill }}
+                                                </span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-gray-400 italic text-xs">Any Skill</span>
+                                        @endif
+                                    </td>
+
+                                    <td class="p-4 font-semibold">{{ $training->duration }}</td>
+                                    <td class="p-4">
+                                        {!! $training->number_of_nominees > 0
+                                            ? $training->number_of_nominees
+                                            : '<span class="text-gray-400 text-sm">None</span>' !!}
                                     </td>
                                     <td class="p-4">
                                         <div x-data="{ openDetails: false, openDelete: false, openEdit: false }" class="flex flex-col gap-1">
@@ -471,6 +495,76 @@
                                                                     Permanent and Jocos
                                                                 </option>
                                                             </select>
+                                                        </div>
+
+                                                        <div class="mb-4">
+                                                            <label
+                                                                class="block text-sm font-medium text-gray-700">Applicable
+                                                                Skill(s)</label>
+
+                                                            <div x-data="{
+                                                                open: false,
+                                                                selected: {{ json_encode($training->applicable_skill ?? []) }}
+                                                            }" class="relative">
+
+                                                                <div @click="open = !open"
+                                                                    class="inline-flex items-center justify-between w-full px-4 p-2 bg-white text-gray-900 border border-gray-300 rounded cursor-pointer min-h-[42px]">
+
+                                                                    <div class="flex flex-wrap gap-1">
+                                                                        <template x-if="selected.length > 0">
+                                                                            <template x-for="skill in selected"
+                                                                                :key="skill">
+                                                                                <span
+                                                                                    class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded flex items-center">
+                                                                                    <span x-text="skill"></span>
+                                                                                </span>
+                                                                            </template>
+                                                                        </template>
+                                                                        <template x-if="selected.length === 0">
+                                                                            <span class="text-gray-500">Select
+                                                                                Skills</span>
+                                                                        </template>
+                                                                    </div>
+
+                                                                    <svg class="w-4 h-4 ml-2 transition-transform"
+                                                                        :class="open ? 'rotate-180' : ''" fill="none"
+                                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </div>
+
+                                                                <div x-show="open" @click.away="open = false"
+                                                                    x-transition x-cloak
+                                                                    class="absolute z-10 w-full bg-white border border-gray-300 shadow rounded mt-1 max-h-60 overflow-y-auto">
+                                                                    <ul class="p-2 space-y-1">
+                                                                        @foreach ($skills as $skill)
+                                                                            <li>
+                                                                                <label
+                                                                                    class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                                                                    <input type="checkbox"
+                                                                                        value="{{ $skill->name }}"
+                                                                                        x-model="selected"
+                                                                                        class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                                                                    <span
+                                                                                        class="text-sm text-gray-900">{{ $skill->name }}</span>
+                                                                                </label>
+                                                                            </li>
+                                                                        @endforeach
+                                                                    </ul>
+                                                                </div>
+
+                                                                <template x-for="skill in selected" :key="skill">
+                                                                    <input type="hidden" name="applicable_skill[]"
+                                                                        :value="skill">
+                                                                </template>
+
+                                                                <template x-if="selected.length === 0">
+                                                                    <input type="hidden" name="applicable_skill[]"
+                                                                        value="">
+                                                                </template>
+                                                            </div>
                                                         </div>
 
 

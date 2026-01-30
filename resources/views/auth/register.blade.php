@@ -10,6 +10,12 @@
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans">
 
+    <div x-data="{ showToast: false }" x-show="showToast" x-init="setTimeout(() => showToast = false, 3000)"
+        x-transition:enter="transition ease-out duration-300" x-transition:leave="transition ease-in duration-300"
+        class="fixed bottom-10 right-10 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg text-sm">
+        <p x-text="'{{ session('success') }}'"></p>
+    </div>
+
     <div class="w-[1000px] bg-white rounded-lg shadow-lg p-8">
         <div class="text-center mb-6">
             <h1 class="text-2xl font-bold text-blue-800">Employee Registration</h1>
@@ -69,7 +75,8 @@
                             @enderror
 
                             <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Date</label>
-                            <input type="date" name="appointment_date" value="{{ old('appointment_date') }}" required
+                            <input type="date" name="appointment_date" value="{{ old('appointment_date') }}"
+                                required
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
                             @error('appointment_date')
                                 <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
@@ -133,22 +140,26 @@
                             <div x-show="open" @click.away="open = false" x-transition x-cloak
                                 class="absolute outline-none z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
 
-                                <div class="grid grid-cols-2 gap-2 p-4">
+                                <div class="flex flex-col p-4">
                                     @foreach ($skills as $skill)
                                         <label
                                             class="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                                            <input type="checkbox" value="{{ $skill->name }}" x-model="selectedSkills"
+                                            <input type="checkbox" value="{{ $skill->name }}"
+                                                x-model="selectedSkills"
                                                 class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                             <span>{{ $skill->name }}</span>
                                         </label>
                                     @endforeach
                                 </div>
 
-                                <div class="p-2 border-t border-gray-100 flex justify-end">
+                                <div class="p-2 border-t border-gray-100 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 ml-2"
+                                        x-text="`Selected: ${selectedSkills.length}`"></span>
                                     <button @click="open = false" type="button"
                                         class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 px-4 rounded">
                                         Done
                                     </button>
+
                                 </div>
                             </div>
                         </div>
@@ -161,12 +172,13 @@
 
 
 
-                    {{-- <div>
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
                         <input type="file" name="profile"
                             class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
                         @error('profile') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
-                    </div> --}}
+                    </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>

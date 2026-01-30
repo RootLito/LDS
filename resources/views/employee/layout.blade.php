@@ -38,11 +38,11 @@
                     </a>
 
                     <!-- Certificates -->
-                    {{-- <a href="{{ route('employee.certificates') }}"
+                    <a href="{{ route('employee.certificates') }}"
                         class="w-full text-sm font-semibold text-gray-700 flex items-center gap-4 px-6 py-2 rounded hover:bg-gray-100 transition {{ request()->routeIs('employee.certificates') ? 'bg-gray-200' : '' }}">
                         <i class="fa-solid fa-image"></i>
                         Certificates
-                    </a> --}}
+                    </a>
 
 
                     <!-- Logout -->

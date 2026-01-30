@@ -9,7 +9,7 @@ class SkillController extends Controller
 {
     public function index()
     {
-        $skills = Skill::latest()->paginate(10);
+        $skills = Skill::latest()->paginate(8);
         return view('admin.skillset', compact('skills'));
     }
 
@@ -41,6 +41,13 @@ class SkillController extends Controller
 
         $skill->update($request->all());
         return redirect()->route('skills.index');
+    }
+
+
+    public function destroy(Skill $skill)
+    {
+        $skill->delete();
+        return redirect()->route('skills.index')->with('success', 'Skill deleted successfully.');
     }
 
 }

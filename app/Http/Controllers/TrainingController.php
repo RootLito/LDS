@@ -79,43 +79,30 @@ class TrainingController extends Controller
     {
         $skills = Skill::all();
         $trainings = Training::query()
-            // Filter trainings by title, applicable_for, and status
-            ->when(
-                $request->title,
-                fn($q) => $q->where('title', 'like', '%' . $request->title . '%')
-            )
-            ->when(
-                $request->applicable_for,
-                fn($q) => $q->where('applicable_for', $request->applicable_for)
-            )
-            ->when(
-                $request->status,
-                fn($q) => $q->whereHas('nominees', function ($q) use ($request) {
-                    // Only include employees whose status matches the selected one
-                    $q->where('status', $request->status);
-                })
-            )
+            ->when($request->title, fn($q) => $q->where('title', 'like', '%' . $request->title . '%'))
+            ->when($request->applicable_for, fn($q) => $q->where('applicable_for', $request->applicable_for))
             ->latest()
             ->paginate(4);
 
-        // Loop over each training to determine the nominees
         foreach ($trainings as $training) {
-            $nominees = Employee::whereDoesntHave('trainingsAttended', function ($q) use ($training) {
-                $q->where('title', $training->title);
-            })
-                // Filter employees based on the training's applicable_for value
+            $nominees = Employee::query()
+                ->whereDoesntHave('trainingsAttended', function ($q) use ($training) {
+                    $q->where('title', $training->title);
+                })
                 ->when($training->applicable_for, function ($q) use ($training) {
                     if ($training->applicable_for === 'permanent') {
                         $q->where('status', 'permanent');
                     } elseif ($training->applicable_for === 'jocos') {
-                        $q->where('status', ['jo', 'cos']);
-                    } elseif ($training->applicable_for === 'per_and_jocos') {
+                        $q->whereIn('status', ['jo', 'cos']);
+                    } elseif ($training->applicable_for === 'permanent_and_jocos') {
                         $q->whereIn('status', ['permanent', 'jo', 'cos']);
                     }
                 })
+                ->when($training->applicable_skills, function ($q) use ($training) {
+                    $q->whereJsonContains('skills', $training->applicable_skills);
+                })
                 ->get();
 
-            // Add the nominees and their count to the training object
             $training->nominees = $nominees;
             $training->number_of_nominees = $nominees->count();
         }
@@ -170,16 +157,17 @@ class TrainingController extends Controller
 
 
 
+
     // ===============================
     // Employee: Store Attended Training
     // ===============================
     public function storeAttendedTraining(Request $request)
     {
         if (!Auth::guard('employee')->check()) {
-            return redirect()
-                ->route('employee.login.form')
-                ->with('error', 'Access denied.');
+            return redirect()->route('employee.login.form')->with('error', 'Access denied.');
         }
+
+        $employee = Auth::guard('employee')->user();
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -190,20 +178,24 @@ class TrainingController extends Controller
             'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $employee = Auth::guard('employee')->user();
-
-        // Calculate duration in hours: 1 day = 8 hours
+        // Calculate duration
         $start = Carbon::parse($request->start_date);
         $end = Carbon::parse($request->end_date);
-        $days = $start->diffInDays($end) + 1; // +1 to include the start day
-        $hours = $days * 8;
-
-        // Format dates as dd/mm/yyyy
+        $hours = ($start->diffInDays($end) + 1) * 8;
         $formattedDate = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
 
         $certificatePath = null;
+
         if ($request->hasFile('certificate_path')) {
-            $certificatePath = $request->file('certificate_path')->store('certificates', 'public');
+            $file = $request->file('certificate_path');
+
+            // VITAL: Check isValid() to catch IIS temp permission issues
+            if ($file->isValid()) {
+                $certificatePath = $file->store('certificates', 'public');
+            } else {
+                // If IIS blocks the file, we return an error instead of crashing
+                return back()->withErrors(['certificate_path' => 'Server Error: Unable to read temporary file. Check IIS Temp permissions.']);
+            }
         }
 
         TrainingAttended::create([
@@ -212,18 +204,16 @@ class TrainingController extends Controller
             'date' => $formattedDate,
             'duration' => $hours,
             'type' => strtoupper($request->type),
-            'sponsored' => strtoupper($request->sponsored),
-            'certificate_path' => $certificatePath,
+            'sponsored' => $request->sponsored ? strtoupper($request->sponsored) : null,
+            'certificate_path' => $certificatePath, // Guaranteed to be path or null
         ]);
-
-
 
         return back()->with('success', 'Training record added successfully!');
     }
 
     // ===============================
-    // Employee: Update Attended Training
-    // ===============================
+// Employee: Update Attended Training
+// ===============================
     public function updateAttendedTraining(Request $request, $id)
     {
         $employee = Auth::guard('employee')->user();
@@ -238,23 +228,25 @@ class TrainingController extends Controller
             'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Calculate duration in hours: 1 day = 8 hours
         $start = Carbon::parse($request->start_date);
         $end = Carbon::parse($request->end_date);
-        $days = $start->diffInDays($end) + 1;
-        $hours = $days * 8;
-
-        // Format dates as dd/mm/yyyy
+        $hours = ($start->diffInDays($end) + 1) * 8;
         $formattedDate = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
 
         $certificatePath = $training->certificate_path;
 
         if ($request->hasFile('certificate_path')) {
-            // Delete old certificate if it exists
-            if ($certificatePath) {
-                Storage::disk('public')->delete($certificatePath);
+            $file = $request->file('certificate_path');
+
+            if ($file->isValid()) {
+                // FIX: Using !empty() prevents the "Path must not be empty" error if old path was null
+                if (!empty($certificatePath) && Storage::disk('public')->exists($certificatePath)) {
+                    Storage::disk('public')->delete($certificatePath);
+                }
+                $certificatePath = $file->store('certificates', 'public');
+            } else {
+                return back()->withErrors(['certificate_path' => 'Server Error: Unable to read temporary file.']);
             }
-            $certificatePath = $request->file('certificate_path')->store('certificates', 'public');
         }
 
         $training->update([
@@ -262,7 +254,7 @@ class TrainingController extends Controller
             'date' => $formattedDate,
             'duration' => $hours,
             'type' => strtoupper($request->type),
-            'sponsored' => strtoupper($request->sponsored),
+            'sponsored' => $request->sponsored ? strtoupper($request->sponsored) : null,
             'certificate_path' => $certificatePath,
         ]);
 
@@ -295,16 +287,32 @@ class TrainingController extends Controller
 
     public function allCertificates()
     {
-        $employees = Employee::with([
-            'trainingsAttended' => function ($q) {
-                $q->whereNotNull('certificate_path');
-            }
-        ])
-            ->paginate(10);
+        $name = request('name');
+        $title = request('title');
+
+        $employees = Employee::query()
+            ->when($title, function ($query) use ($title) {
+                $query->whereHas('trainingsAttended', function ($q) use ($title) {
+                    $q->whereNotNull('certificate_path')
+                        ->where('title', 'like', "%$title%");
+                });
+            })
+            ->when($name, function ($query) use ($name) {
+                $query->where('fullname', 'like', "%$name%");
+            })
+            ->with([
+                'trainingsAttended' => function ($q) use ($title) {
+                    $q->whereNotNull('certificate_path');
+                    if ($title) {
+                        $q->where('title', 'like', "%$title%");
+                    }
+                }
+            ])
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.certificates', compact('employees'));
     }
-
 
 
     // ===============================
@@ -371,11 +379,25 @@ class TrainingController extends Controller
     public function update(Request $request, $id)
     {
         $training = Training::findOrFail($id);
-        $training->update($request->all());
-        return redirect()->route('admin.trainings')
-            ->with('success', 'Training updated successfully.');
-    }
 
+        // Validate the input
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'applicable_for' => 'nullable|string',
+            'status' => 'required|string',
+            'duration' => 'required|string',
+            'conducted_by' => 'required|string',
+            'charging_of_funds' => 'nullable|string',
+            'endorsed_by' => 'nullable|string',
+            'hrdc_resolution_no' => 'nullable|string',
+            'applicable_skill' => 'nullable|array',
+        ]);
+
+        $training->update($validated);
+
+        return redirect()->route('admin.trainings')
+            ->with('success', 'Training and nominee list updated successfully.');
+    }
 
     public function destroy($id)
     {

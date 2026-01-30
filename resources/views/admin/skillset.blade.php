@@ -58,7 +58,7 @@
                                     <!-- Edit Skill Modal -->
                                     <div x-show="openEdit" x-cloak @click.away="openEdit = false"
                                         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                                        <div @click.away="openEdit = false" class="bg-white rounded shadow-lg p-6 w-96">
+                                        <div @click.away="openEdit = false" class="bg-white rounded shadow-lg p-6 w-200">
                                             <h2 class="text-xl font-bold text-gray-700 mb-6">Edit Skill</h2>
                                             <form action="{{ route('skills.update', $skill->id) }}" method="POST">
                                                 @csrf

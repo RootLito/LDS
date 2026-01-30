@@ -33,12 +33,12 @@
                     <span class="font-semibold text-gray-700">Training</span>
                 </a>
 
-                {{-- <a href="{{ route('admin.certificates') }}"
+                <a href="{{ route('admin.certificates') }}"
                     class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('admin.certificates') ? 'bg-gray-200' : '' }}">
                     <i class="fa-solid fa-image"></i>
 
                     <span class="font-semibold text-gray-700">Cerificates</span>
-                </a> --}}
+                </a>
 
                 <a href="{{ route('admin.employee') }}"
                     class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('admin.employee*') ? 'bg-gray-200' : '' }}">
@@ -48,8 +48,8 @@
 
                 <a href="{{ route('skills.index') }}"
                     class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('skills*') ? 'bg-gray-200' : '' }}">
-                    <i class="fa-solid fa-bookmark"></i>
-                    <span class="font-semibold text-gray-700">Skill</span>
+                    <i class="fa-solid fa-scroll"></i>
+                    <span class="font-semibold text-gray-700">Expertise</span>
                 </a>
 
 
