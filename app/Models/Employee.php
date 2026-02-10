@@ -21,15 +21,26 @@ class Employee extends Authenticatable
         'position',
         'office',
         'designation',
+        'skills'
     ];
 
     protected $hidden = [
         'password',
     ];
 
+    protected $casts = [
+        'skills' => 'array',
+    ];
+
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class);
+    }
+
+
     public function trainingsAttended()
     {
         return $this->hasMany(TrainingAttended::class, 'emp_id');
     }
-    
+
 }

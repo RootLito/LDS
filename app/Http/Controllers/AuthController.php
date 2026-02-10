@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
+use App\Models\Skill;
 use Illuminate\Support\Facades\Storage;
 
 use App\Models\Admin;
@@ -15,7 +16,8 @@ class AuthController extends Controller
     // Show Employee Registration Form
     public function showRegisterForm()
     {
-        return view('auth.register');
+        $skills = Skill::all();
+        return view('auth.register', compact('skills'));
     }
 
 
@@ -32,14 +34,14 @@ class AuthController extends Controller
             'designation' => 'required|string|max:255',
             'username' => 'required|string|unique:employees,username',
             'password' => 'required|string|min:6|confirmed',
-            'profile' => 'nullable|image|max:2048',
+            'skills' => 'required|array',
         ]);
 
         $profilePath = null;
         if ($request->hasFile('profile')) {
             $profilePath = $request->file('profile')->store('profiles', 'public');
         }
-
+        
         Employee::create([
             'fullname' => $request->fullname,
             'gender' => $request->gender,
@@ -51,12 +53,16 @@ class AuthController extends Controller
             'designation' => $request->designation,
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'profile' => $profilePath,
+            'skills' => $request->skills,
         ]);
 
         return redirect()->route('employee.login.form')
             ->with('success', 'Registration successful! Please login.');
     }
+
+
+
+
 
 
 

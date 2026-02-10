@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Employee;
+use App\Models\Skill;
 
 class EmployeeController extends Controller
 {
@@ -13,8 +14,11 @@ class EmployeeController extends Controller
     public function profile()
     {
         $employee = Auth::guard('employee')->user();
-        return view('employee.profile', compact('employee'));
+        $skills = Skill::all();  // Fetch all available skills
+        $employeeSkills = $employee->skills; // Get the employee's skills via the relationship
+        return view('employee.profile', compact('employee', 'skills', 'employeeSkills'));
     }
+
 
     // Update only profile picture
     public function updateProfilePicture(Request $request)
@@ -35,7 +39,6 @@ class EmployeeController extends Controller
         return back()->with('success', 'Profile picture updated successfully!');
     }
 
-    // Update account info (excluding profile picture)
     public function updateAccount(Request $request)
     {
         $employee = Auth::guard('employee')->user();
@@ -49,10 +52,12 @@ class EmployeeController extends Controller
             'position' => 'nullable|string|max:255',
             'office' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
+            'skills' => 'nullable|array',
         ]);
 
         $employee->update($validated);
 
         return back()->with('success', 'Account information updated successfully!');
     }
+
 }

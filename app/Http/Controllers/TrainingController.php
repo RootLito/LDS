@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Skill;
 use Illuminate\Http\Request;
 use App\Models\Training;
 use App\Models\Employee;
@@ -36,7 +37,7 @@ class TrainingController extends Controller
                 $q->where('date', 'like', '%' . $request->date . '%');
             })
             ->latest()
-            ->get();
+            ->paginate(4);
 
         return view('employee.dashboard', compact('trainings'));
     }
@@ -76,37 +77,39 @@ class TrainingController extends Controller
 
     public function trainings(Request $request)
     {
+        $skills = Skill::all();
         $trainings = Training::query()
-            ->when(
-                $request->title,
-                fn($q) =>
-                $q->where('title', 'like', '%' . $request->title . '%')
-            )
-            ->when(
-                $request->applicable_for,
-                fn($q) =>
-                $q->where('applicable_for', $request->applicable_for)
-            )
-            ->when(
-                $request->status,
-                fn($q) =>
-                $q->where('status', $request->status)
-            )
+            ->when($request->title, fn($q) => $q->where('title', 'like', '%' . $request->title . '%'))
+            ->when($request->applicable_for, fn($q) => $q->where('applicable_for', $request->applicable_for))
             ->latest()
-            ->paginate(10);
+            ->paginate(4);
 
         foreach ($trainings as $training) {
-            $nominees = Employee::whereDoesntHave('trainingsAttended', function ($q) use ($training) {
-                $q->where('title', $training->title);
-            })->get();
+            $nominees = Employee::query()
+                ->whereDoesntHave('trainingsAttended', function ($q) use ($training) {
+                    $q->where('title', $training->title);
+                })
+                ->when($training->applicable_for, function ($q) use ($training) {
+                    if ($training->applicable_for === 'permanent') {
+                        $q->where('status', 'permanent');
+                    } elseif ($training->applicable_for === 'jocos') {
+                        $q->whereIn('status', ['jo', 'cos']);
+                    } elseif ($training->applicable_for === 'permanent_and_jocos') {
+                        $q->whereIn('status', ['permanent', 'jo', 'cos']);
+                    }
+                })
+                ->when($training->applicable_skills, function ($q) use ($training) {
+                    $q->whereJsonContains('skills', $training->applicable_skills);
+                })
+                ->get();
 
             $training->nominees = $nominees;
             $training->number_of_nominees = $nominees->count();
         }
 
-
-        return view('admin.training', compact('trainings'));
+        return view('admin.training', compact('trainings', 'skills'));
     }
+
 
 
     public function employees(Request $request)
@@ -139,10 +142,11 @@ class TrainingController extends Controller
                         ->having('total_hours', '>=', $request->hours);
                 });
             })
-            ->paginate(10);
+            ->paginate(8);
 
         return view('admin.employee', compact('employees'));
     }
+
 
     public function show($id)
     {
@@ -153,99 +157,104 @@ class TrainingController extends Controller
 
 
 
+
     // ===============================
     // Employee: Store Attended Training
     // ===============================
     public function storeAttendedTraining(Request $request)
     {
         if (!Auth::guard('employee')->check()) {
-            return redirect()
-                ->route('employee.login.form')
-                ->with('error', 'Access denied.');
+            return redirect()->route('employee.login.form')->with('error', 'Access denied.');
         }
-
-        $request->validate([
-            'title'           => 'required|string|max:255',
-            'start_date'      => 'required|date',
-            'end_date'        => 'required|date|after_or_equal:start_date',
-            'type'            => 'required|string|max:100',
-            'sponsored'       => 'nullable|string|max:255',
-            'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
 
         $employee = Auth::guard('employee')->user();
 
-        // Calculate duration in hours: 1 day = 8 hours
-        $start = Carbon::parse($request->start_date);
-        $end   = Carbon::parse($request->end_date);
-        $days  = $start->diffInDays($end) + 1; // +1 to include the start day
-        $hours = $days * 8;
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'type' => 'required|string|max:100',
+            'sponsored' => 'nullable|string|max:255',
+            'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
 
-        // Format dates as dd/mm/yyyy
+        // Calculate duration
+        $start = Carbon::parse($request->start_date);
+        $end = Carbon::parse($request->end_date);
+        $hours = ($start->diffInDays($end) + 1) * 8;
         $formattedDate = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
 
         $certificatePath = null;
+
         if ($request->hasFile('certificate_path')) {
-            $certificatePath = $request->file('certificate_path')->store('certificates', 'public');
+            $file = $request->file('certificate_path');
+
+            // VITAL: Check isValid() to catch IIS temp permission issues
+            if ($file->isValid()) {
+                $certificatePath = $file->store('certificates', 'public');
+            } else {
+                // If IIS blocks the file, we return an error instead of crashing
+                return back()->withErrors(['certificate_path' => 'Server Error: Unable to read temporary file. Check IIS Temp permissions.']);
+            }
         }
 
         TrainingAttended::create([
-            'emp_id'          => $employee->id,
-            'title'           => strtoupper($request->title),
-            'date'            => $formattedDate,
-            'duration'        => $hours,
-            'type'            => strtoupper($request->type),
-            'sponsored'       => strtoupper($request->sponsored),
-            'certificate_path' => $certificatePath,
+            'emp_id' => $employee->id,
+            'title' => strtoupper($request->title),
+            'date' => $formattedDate,
+            'duration' => $hours,
+            'type' => strtoupper($request->type),
+            'sponsored' => $request->sponsored ? strtoupper($request->sponsored) : null,
+            'certificate_path' => $certificatePath, // Guaranteed to be path or null
         ]);
-
-
 
         return back()->with('success', 'Training record added successfully!');
     }
 
     // ===============================
-    // Employee: Update Attended Training
-    // ===============================
+// Employee: Update Attended Training
+// ===============================
     public function updateAttendedTraining(Request $request, $id)
     {
         $employee = Auth::guard('employee')->user();
         $training = TrainingAttended::where('emp_id', $employee->id)->findOrFail($id);
 
         $request->validate([
-            'title'           => 'required|string|max:255',
-            'start_date'      => 'required|date',
-            'end_date'        => 'required|date|after_or_equal:start_date',
-            'type'            => 'required|string|max:100',
-            'sponsored'       => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'type' => 'required|string|max:100',
+            'sponsored' => 'nullable|string|max:255',
             'certificate_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Calculate duration in hours: 1 day = 8 hours
         $start = Carbon::parse($request->start_date);
-        $end   = Carbon::parse($request->end_date);
-        $days  = $start->diffInDays($end) + 1;
-        $hours = $days * 8;
-
-        // Format dates as dd/mm/yyyy
+        $end = Carbon::parse($request->end_date);
+        $hours = ($start->diffInDays($end) + 1) * 8;
         $formattedDate = $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
 
         $certificatePath = $training->certificate_path;
 
         if ($request->hasFile('certificate_path')) {
-            // Delete old certificate if it exists
-            if ($certificatePath) {
-                Storage::disk('public')->delete($certificatePath);
+            $file = $request->file('certificate_path');
+
+            if ($file->isValid()) {
+                // FIX: Using !empty() prevents the "Path must not be empty" error if old path was null
+                if (!empty($certificatePath) && Storage::disk('public')->exists($certificatePath)) {
+                    Storage::disk('public')->delete($certificatePath);
+                }
+                $certificatePath = $file->store('certificates', 'public');
+            } else {
+                return back()->withErrors(['certificate_path' => 'Server Error: Unable to read temporary file.']);
             }
-            $certificatePath = $request->file('certificate_path')->store('certificates', 'public');
         }
 
         $training->update([
-            'title'           => strtoupper($request->title),
-            'date'            => $formattedDate,
-            'duration'        => $hours,
-            'type'            => strtoupper($request->type),
-            'sponsored'       => strtoupper($request->sponsored),
+            'title' => strtoupper($request->title),
+            'date' => $formattedDate,
+            'duration' => $hours,
+            'type' => strtoupper($request->type),
+            'sponsored' => $request->sponsored ? strtoupper($request->sponsored) : null,
             'certificate_path' => $certificatePath,
         ]);
 
@@ -278,14 +287,32 @@ class TrainingController extends Controller
 
     public function allCertificates()
     {
-        $employees = Employee::with(['trainingsAttended' => function ($q) {
-            $q->whereNotNull('certificate_path');
-        }])
-        ->paginate(10);
+        $name = request('name');
+        $title = request('title');
+
+        $employees = Employee::query()
+            ->when($title, function ($query) use ($title) {
+                $query->whereHas('trainingsAttended', function ($q) use ($title) {
+                    $q->whereNotNull('certificate_path')
+                        ->where('title', 'like', "%$title%");
+                });
+            })
+            ->when($name, function ($query) use ($name) {
+                $query->where('fullname', 'like', "%$name%");
+            })
+            ->with([
+                'trainingsAttended' => function ($q) use ($title) {
+                    $q->whereNotNull('certificate_path');
+                    if ($title) {
+                        $q->where('title', 'like', "%$title%");
+                    }
+                }
+            ])
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.certificates', compact('employees'));
     }
-
 
 
     // ===============================
@@ -293,7 +320,7 @@ class TrainingController extends Controller
     // ===============================
     public function index()
     {
-        $trainings = Training::all();
+        $trainings = Training::all()->pagination(8);
         return view('admin.trainings.index', compact('trainings'));
     }
 
@@ -305,25 +332,29 @@ class TrainingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title'               => 'required|string|max:255',
-            'status'              => 'required|string|max:50',
-            'duration'            => 'required|string|max:50',
-            'conducted_by'        => 'required|string|max:255',
-            'charging_of_funds'   => 'nullable|string|max:255',
-            'endorsed_by'         => 'nullable|string|max:255',
-            'hrdc_resolution_no'  => 'nullable|string|max:255',
-            'applicable_for'      => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
+            'status' => 'required|string|max:50',
+            'duration' => 'required|string|max:50',
+            'conducted_by' => 'required|string|max:255',
+            'charging_of_funds' => 'nullable|string|max:255',
+            'endorsed_by' => 'nullable|string|max:255',
+            'hrdc_resolution_no' => 'nullable|string|max:255',
+            'applicable_for' => 'nullable|string|max:255',
+            'applicable_skills' => 'nullable|array',
         ]);
 
+        // dd($request->all());
+
         Training::create([
-            'title'              => $request->title,
-            'status'             => $request->status,
-            'duration'           => $request->duration,
-            'conducted_by'       => $request->conducted_by,
-            'charging_of_funds'  => $request->charging_of_funds,
-            'endorsed_by'        => $request->endorsed_by,
+            'title' => $request->title,
+            'status' => $request->status,
+            'duration' => $request->duration,
+            'conducted_by' => $request->conducted_by,
+            'charging_of_funds' => $request->charging_of_funds,
+            'endorsed_by' => $request->endorsed_by,
             'hrdc_resolution_no' => $request->hrdc_resolution_no,
-            'applicable_for'     => $request->applicable_for,
+            'applicable_for' => $request->applicable_for,
+            'applicable_skills' => $request->applicable_skills,
         ]);
 
         return redirect()
@@ -348,11 +379,25 @@ class TrainingController extends Controller
     public function update(Request $request, $id)
     {
         $training = Training::findOrFail($id);
-        $training->update($request->all());
-        return redirect()->route('admin.trainings')
-            ->with('success', 'Training updated successfully.');
-    }
 
+        // Validate the input
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'applicable_for' => 'nullable|string',
+            'status' => 'required|string',
+            'duration' => 'required|string',
+            'conducted_by' => 'required|string',
+            'charging_of_funds' => 'nullable|string',
+            'endorsed_by' => 'nullable|string',
+            'hrdc_resolution_no' => 'nullable|string',
+            'applicable_skill' => 'nullable|array',
+        ]);
+
+        $training->update($validated);
+
+        return redirect()->route('admin.trainings')
+            ->with('success', 'Training and nominee list updated successfully.');
+    }
 
     public function destroy($id)
     {

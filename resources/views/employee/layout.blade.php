@@ -9,13 +9,12 @@
     @vite(['resources/css/app.css'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-
-
+    <link rel="shortcut icon" href="{{ asset('images/bfar.png') }}" type="image/x-icon">
 </head>
 
 <body>
     <div class="w-full h-screen flex flex-col bg-gray-200">
-        <div class="w-full bg-white">
+        <div class="w-full bg-white border-b border-gray-200">
             <header class="flex max-w-[1100px] h-[60px] items-center justify-between mx-auto">
                 <div class="flex">
                     <img src="{{ asset('images/bfar.png') }}" alt="bfar logo" width="50px" class="self-center">
@@ -59,32 +58,10 @@
             </header>
         </div>
 
-        <main class="flex-1  w-[1100px] mx-auto p-6">
+        <main class="flex-1  w-full overflow-y-auto">
             @yield('content')
         </main>
     </div>
     <script src="//unpkg.com/alpinejs" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            toastr.options = {
-                "closeButton": true,
-                "progressBar": true,
-                "positionClass": "toast-top-right",
-                "timeOut": "3000"
-            };
-
-            @if(session('success'))
-                toastr.success(@json(session('success')));
-            @endif
-
-            @if(session('error'))
-                toastr.error(@json(session('error')));
-            @endif
-        });
-    </script>
-
 </body>
-
 </html>

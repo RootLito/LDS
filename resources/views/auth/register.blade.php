@@ -6,9 +6,17 @@
     <title>Employee Registration | Learning & Development System</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="shortcut icon" href="{{ asset('images/bfar.png') }}" type="image/x-icon">
+
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans">
+
+    <div x-data="{ showToast: false }" x-show="showToast" x-init="setTimeout(() => showToast = false, 3000)"
+        x-transition:enter="transition ease-out duration-300" x-transition:leave="transition ease-in duration-300"
+        class="fixed bottom-10 right-10 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg text-sm">
+        <p x-text="'{{ session('success') }}'"></p>
+    </div>
 
     <div class="w-[1000px] bg-white rounded-lg shadow-lg p-8">
         <div class="text-center mb-6">
@@ -26,7 +34,9 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                         <input type="text" name="fullname" value="{{ old('fullname') }}" required
                             class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                        @error('fullname') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('fullname')
+                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="grid grid-cols-2 gap-5">
@@ -35,10 +45,12 @@
                             <select name="gender"
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
                                 <option value="" selected disabled>Select Gender</option>
-                                <option value="Male" {{ old('gender')=='Male' ? 'selected' : '' }}>Male</option>
-                                <option value="Female" {{ old('gender')=='Female' ? 'selected' : '' }}>Female</option>
+                                <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                                <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
                             </select>
-                            @error('gender') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('gender')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
 
                             <label class="block text-sm font-medium text-gray-700 mb-1">Employment Status</label>
                             <select name="status"
@@ -51,7 +63,7 @@
                             </select>
 
                             @error('status')
-                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                             @enderror
 
                         </div>
@@ -60,12 +72,17 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Birthdate</label>
                             <input type="date" name="birthdate" value="{{ old('birthdate') }}" required
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                            @error('birthdate') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('birthdate')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
 
                             <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Date</label>
-                            <input type="date" name="appointment_date" value="{{ old('appointment_date') }}" required
+                            <input type="date" name="appointment_date" value="{{ old('appointment_date') }}"
+                                required
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                            @error('appointment_date') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('appointment_date')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
 
 
                         </div>
@@ -76,26 +93,88 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
                             <input type="text" name="position" value="{{ old('position') }}" required
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                            @error('position') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('position')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Office</label>
                             <input type="text" name="office" value="{{ old('office') }}" required
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                            @error('office') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('office')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
                             <input type="text" name="designation" value="{{ old('designation') }}" required
                                 class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                            @error('designation') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                            @error('designation')
+                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
 
                 <div class="space-y-5">
+                    <div class="mb-4" x-data="{ open: false, selectedSkills: [] }">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+
+                        <div class="relative">
+                            <div @click="open = !open"
+                                class="w-full h-10 px-4 flex items-center border border-gray-300 rounded-md bg-white cursor-pointer focus-within:ring-2 focus-within:ring-indigo-500">
+                                <span class="block truncate text-gray-700"
+                                    x-text="selectedSkills.length ? selectedSkills.join(', ') : 'Select skills'">
+                                </span>
+                                <svg class="w-4 h-4 ml-auto text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+
+                            <template x-for="skill in selectedSkills" :key="skill">
+                                <input type="hidden" name="skills[]" :value="skill">
+                            </template>
+
+                            <div x-show="open" @click.away="open = false" x-transition x-cloak
+                                class="absolute outline-none z-50 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+
+                                <div class="flex flex-col p-4">
+                                    @foreach ($skills as $skill)
+                                        <label
+                                            class="flex items-center space-x-2 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <input type="checkbox" value="{{ $skill->name }}"
+                                                x-model="selectedSkills"
+                                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                            <span>{{ $skill->name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+
+                                <div class="p-2 border-t border-gray-100 flex justify-between items-center">
+                                    <span class="text-xs text-gray-500 ml-2"
+                                        x-text="`Selected: ${selectedSkills.length}`"></span>
+                                    <button @click="open = false" type="button"
+                                        class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 px-4 rounded">
+                                        Done
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        @error('skills')
+                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+
+
+
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
                         <input type="file" name="profile"
@@ -107,7 +186,9 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <input type="text" name="username" value="{{ old('username') }}" required
                             class="w-full h-10 px-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500">
-                        @error('username') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('username')
+                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div x-data="{ show: false }" class="relative">
@@ -120,7 +201,9 @@
                                 <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
                             </button>
                         </div>
-                        @error('password') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                        @error('password')
+                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div x-data="{ show: false }" class="relative">

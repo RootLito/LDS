@@ -8,6 +8,7 @@
     <title>Employee | Learning & Development System</title>
     @vite(['resources/css/app.css'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="shortcut icon" href="{{ asset('images/bfar.png') }}" type="image/x-icon">
     @livewireStyles
 
 </head>
@@ -43,8 +44,15 @@
                 <a href="{{ route('admin.employee') }}"
                     class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('admin.employee*') ? 'bg-gray-200' : '' }}">
                     <i class="fa-solid fa-user-group"></i>
-                    <span class="font-semibold text-gray-700">Employees</span>
+                    <span class="font-semibold text-gray-700">Employee</span>
                 </a>
+
+                <a href="{{ route('skills.index') }}"
+                    class="w-full flex items-center gap-4 px-6 py-3 text-sm rounded hover:bg-gray-200 text-gray-600 transition {{ request()->routeIs('skills*') ? 'bg-gray-200' : '' }}">
+                    <i class="fa-solid fa-scroll"></i>
+                    <span class="font-semibold text-gray-700">Expertise</span>
+                </a>
+
 
             </div>
 
@@ -63,7 +71,7 @@
                 <h1 class="font-bold text-2xl text-gray-600">Learning & Development System</h1>
 
             </div>
-            <div class="h-[calc(100vh-60px)] overflow-y-auto">
+            <div class="h-[calc(100vh-60px)] ">
                 @yield('content')
             </div>
         </div>
