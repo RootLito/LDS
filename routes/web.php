@@ -19,7 +19,7 @@ Route::post('/employee-login', [AuthController::class, 'employeeLogin'])->name('
 Route::get('/admin-login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login.form');
 Route::post('/admin-login', [AuthController::class, 'adminLogin'])->name('admin.login.submit');
 
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'adminLogout'])->name('logout');
 Route::post('/employee-logout', [AuthController::class, 'employeeLogout'])->name('employee.logout');
 
 Route::middleware(['auth:employee'])->group(function () {

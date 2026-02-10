@@ -271,19 +271,19 @@
 
                                             <!-- Details Button -->
                                             <button @click="openDetails = true"
-                                                class="h-8 bg-green-500 text-white rounded hover:bg-green-600 flex items-center justify-center">
+                                                class="h-8 bg-green-500 text-white rounded hover:bg-green-600 flex items-center justify-center px-2">
                                                 <i class="fa-solid fa-file-lines me-2"></i> Details
                                             </button>
 
                                             <!-- Edit -->
                                             <button @click="openEdit = true"
-                                                class="h-8 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center">
+                                                class="h-8 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center px-2">
                                                 <i class="fa-solid fa-pen-to-square me-2"></i> Edit
                                             </button>
 
                                             <!-- Delete Button -->
                                             <button @click="openDelete = true"
-                                                class="h-8 bg-red-400 text-white rounded hover:bg-red-500 flex items-center justify-center">
+                                                class="h-8 bg-red-400 text-white rounded hover:bg-red-500 flex items-center justify-center px-2">
                                                 <i class="fa-solid fa-trash-can me-2"></i> Delete
                                             </button>
 

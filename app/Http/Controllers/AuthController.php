@@ -87,9 +87,7 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Use the employee guard
         if (Auth::guard('employee')->attempt($credentials)) {
-            // Auth::guard('employee')->login(Auth::guard('employee')->user());
             $request->session()->regenerate();
             return redirect()->route('employee.dashboard')
                 ->with('success', 'Logged in successfully as Employee.');

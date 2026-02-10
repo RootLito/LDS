@@ -21,12 +21,6 @@ class TrainingController extends Controller
     // ===============================
     public function dashboard(Request $request)
     {
-        if (!Auth::guard('employee')->check()) {
-            return redirect()
-                ->route('employee.login.form')
-                ->with('error', 'Please login first.');
-        }
-
         $employee = Auth::guard('employee')->user();
 
         $trainings = TrainingAttended::where('emp_id', $employee->id)
@@ -36,12 +30,11 @@ class TrainingController extends Controller
             ->when($request->date, function ($q) use ($request) {
                 $q->where('date', 'like', '%' . $request->date . '%');
             })
-            ->latest()
-            ->paginate(4);
+            ->orderByRaw("STR_TO_DATE(SUBSTRING_INDEX(date, ' - ', 1), '%d/%m/%Y') DESC")
+            ->paginate(4); 
 
         return view('employee.dashboard', compact('trainings'));
     }
-
     // ===============================
     // Admin Dashboards
     // ===============================
@@ -51,7 +44,7 @@ class TrainingController extends Controller
         $totalEmployees = Employee::count();
         $employeesWithTraining = Employee::has('trainingsAttended')->count();
         $employeesWithoutTraining = Employee::doesntHave('trainingsAttended')->count();
-        $monthlyTrainings = TrainingAttended::selectRaw('MONTH(created_at) as month, COUNT(*) as total')
+        $monthlyTrainings = Training::selectRaw('MONTH(created_at) as month, COUNT(*) as total')
             ->whereYear('created_at', now()->year)
             ->groupBy('month')
             ->orderBy('month')
@@ -212,8 +205,8 @@ class TrainingController extends Controller
     }
 
     // ===============================
-// Employee: Update Attended Training
-// ===============================
+    // Employee: Update Attended Training
+    // ===============================
     public function updateAttendedTraining(Request $request, $id)
     {
         $employee = Auth::guard('employee')->user();

@@ -56,7 +56,7 @@
 
             </div>
 
-            <form id="employee-logout-form" action="{{ route('employee.logout') }}" method="POST"
+            <form id="employee-logout-form" action="{{ route('logout') }}" method="POST"
                 class="w-full flex p-4 mt-auto">
                 @csrf
                 <button type="submit"
