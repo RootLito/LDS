@@ -301,7 +301,7 @@ class TrainingController extends Controller
                     }
                 }
             ])
-            ->paginate(10)
+            ->paginate(8)
             ->withQueryString();
 
         return view('admin.certificates', compact('employees'));

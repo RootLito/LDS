@@ -31,7 +31,7 @@
 
                     <!-- Profile -->
                     <a href="{{ route('employee.profile') }}"
-                        class="w-full text-sm font-semibold text-gray-700 flex items-center gap-4 px-6 py-2 rounded hover:bg-gray-100 transition {{ request()->routeIs('employee.profile') ? 'bg-gray-200' : '' }}">
+                        class="w-full text-sm font-semibold text-gray-700 flex items-center gap-4 px-6 py-2 rounded hover:bg-gray-100 transition {{ request()->routeIs('employee.profile*') ? 'bg-gray-200' : '' }}">
                         <i class="fa-solid fa-user"></i>
                         Profile
                     </a>

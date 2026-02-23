@@ -1,7 +1,7 @@
 @extends('admin.layout')
 
 @section('content')
-    <div class="p-10" x-data="certificateModal()" @keydown.escape.window="isOpen = false">
+    <div class="w-full h-full overflow-y-auto p-10" x-data="certificateModal()" @keydown.escape.window="isOpen = false">
 
         <h1 class="text-2xl font-bold text-gray-700">Employee Certificates</h1>
         <p class="text-gray-500 mb-10">View all employee trainings and certificates</p>
@@ -34,8 +34,8 @@
                 <thead class="bg-gray-100 text-gray-600">
                     <tr class="border-b border-gray-200">
                         <th class="p-4">Employee</th>
-                        <th class="p-4">Total Trainings</th>
-                        <th class="p-4">Total Certificates</th>
+                        {{-- <th class="p-4">Total Trainings</th> --}}
+                        <th class="p-4">Total Training Certificates</th>
                         <th class="p-4" width="15%">Certificates</th>
                     </tr>
                 </thead>
@@ -56,13 +56,13 @@
                                 </div>
                             </td>
 
-                            <td class="px-4 py-3">
+                            {{-- <td class="px-4 py-3">
                                 @if ($employee->trainingsAttended->count() > 0)
                                     <span class="font-semibold text-gray-700">{{ $employee->trainingsAttended->count() }}</span>
                                 @else
                                     <span class="text-gray-400 text-sm">None</span>
                                 @endif
-                            </td>
+                            </td> --}}
                             <td class="px-4 py-3">
                                 @if ($certificates && $certificates->count() > 0)
                                     <span class="font-semibold text-gray-700">{{ $certificates->count() }}</span>
@@ -82,7 +82,7 @@
                                                     'title' => $c->title,
                                                 ],
                                             )->toJson() }})"
-                                        class="h-8 px-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center">
+                                        class="h-8 px-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center justify-center">
                                         <i class="fa-solid fa-eye me-2"></i> View Certificates
                                     </button>
                                 @endif

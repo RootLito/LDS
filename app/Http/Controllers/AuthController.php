@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Employee;
 use App\Models\Skill;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 
 use App\Models\Admin;
 
@@ -41,7 +41,7 @@ class AuthController extends Controller
         if ($request->hasFile('profile')) {
             $profilePath = $request->file('profile')->store('profiles', 'public');
         }
-        
+
         Employee::create([
             'fullname' => $request->fullname,
             'gender' => $request->gender,
@@ -117,7 +117,7 @@ class AuthController extends Controller
         ]);
 
         if (Auth::guard('admin')->attempt($credentials)) {
-            $request->session()->regenerate(); // important
+            $request->session()->regenerate();
             return redirect()->route('admin.dashboard')
                 ->with('success', 'Logged in successfully as Admin.');
         }
@@ -136,5 +136,29 @@ class AuthController extends Controller
 
         return redirect()->route('admin.login.form')
             ->with('success', 'Logged out successfully.');
+    }
+
+
+
+
+    public function showResetPasswordForm()
+    {
+        return view('auth.reset-password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|exists:employees,username',
+            'password' => 'required|confirmed|min:6',
+        ]);
+
+        $employee = Employee::where('username', $request->username)->first();
+
+        $employee->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return redirect()->route('employee.login.form')->with('success', 'Password updated successfully!');
     }
 }

@@ -26,14 +26,14 @@
         </div>
 
         <!-- Error Message -->
-        @if(session('error'))
-        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {{ session('error') }}
-        </div>
+        @if (session('error'))
+            <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {{ session('error') }}
+            </div>
         @endif
 
         <!-- Form -->
-        <form action="{{ route('employee.login.submit') }}" method="POST" class="space-y-5">
+        <form action="{{ route('employee.login.submit') }}" method="POST" class=" ">
             @csrf
 
             <div>
@@ -41,7 +41,7 @@
                 <input type="text" name="username" value="{{ old('username') }}" required
                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 @error('username')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -62,20 +62,21 @@
                 </div>
 
                 @error('password')
-                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                 @enderror
             </div>
 
+            <a href="{{ route('employee.profile.reset-password') }}" class="text-sm text-blue-600 hover:underline mb-4">
+                Forgot Password?
+            </a>
+
 
             <button type="submit"
-                class="w-full bg-blue-800 text-white py-2 rounded-md font-semibold hover:bg-blue-900 transition">
+                class="w-full bg-blue-800 text-white py-2 rounded-md font-semibold hover:bg-blue-900 transition mt-6">
                 Login
             </button>
             <p class="text-sm text-center">Dont have an account? <a href="{{ route('register.form') }}"
                     class="text-indigo-600 hover:underline">Register</a></p>
-
-
-
         </form>
     </div>
     <script src="//unpkg.com/alpinejs" defer></script>

@@ -226,6 +226,7 @@
                     <input type="text" value="{{ $employee->username }}" readonly
                         class="w-full h-10 px-3 border border-gray-200 bg-gray-100 rounded cursor-not-allowed" />
                 </div>
+                <a href="{{ route('employee.profile.reset-password') }}" class="text-sm text-blue-600 hover:underline">Forgot Password?</a>
 
                 <button type="submit"
                     class="mt-4 w-full bg-blue-800 text-white h-10 rounded-md hover:bg-blue-900 transition">

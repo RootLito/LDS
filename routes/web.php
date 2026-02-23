@@ -10,18 +10,25 @@ Route::get('/', function () {
     return view('index');
 });
 
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
-Route::post('/register', [AuthController::class, 'registerEmployee'])->name('register.submit');
-
+// --- Public Routes (Accessible without logging in) ---
 Route::get('/employee-login', [AuthController::class, 'showEmployeeLoginForm'])->name('employee.login.form');
 Route::post('/employee-login', [AuthController::class, 'employeeLogin'])->name('employee.login.submit');
 
 Route::get('/admin-login', [AuthController::class, 'showAdminLoginForm'])->name('admin.login.form');
 Route::post('/admin-login', [AuthController::class, 'adminLogin'])->name('admin.login.submit');
 
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register.form');
+Route::post('/register', [AuthController::class, 'registerEmployee'])->name('register.submit');
+
+// Forgot Password Routes
+Route::get('/forgot-password', [AuthController::class, 'showResetPasswordForm'])->name('employee.profile.reset-password');
+Route::post('/reset-password-update', [AuthController::class, 'updatePassword'])->name('employee.profile.password.update');
+
 Route::post('/logout', [AuthController::class, 'adminLogout'])->name('logout');
 Route::post('/employee-logout', [AuthController::class, 'employeeLogout'])->name('employee.logout');
 
+
+// --- Employee Protected Routes ---
 Route::middleware(['auth:employee'])->group(function () {
     Route::get('/employee/dashboard', [TrainingController::class, 'dashboard'])->name('employee.dashboard');
     Route::post('/employee/training-attended', [TrainingController::class, 'storeAttendedTraining'])->name('training.attended.store');
@@ -33,6 +40,7 @@ Route::middleware(['auth:employee'])->group(function () {
     Route::get('/employee/certificates', [TrainingController::class, 'certificates'])->name('employee.certificates');
 });
 
+// --- Admin Protected Routes ---
 Route::middleware(['auth:admin'])->group(function () {
     Route::get('/admin/dashboard', [TrainingController::class, 'adminDashboard'])->name('admin.dashboard');
     Route::get('/admin/trainings', [TrainingController::class, 'trainings'])->name('admin.trainings');
